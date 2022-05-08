@@ -1,3 +1,4 @@
+//classe que representa as estrelas que aparecem no ecrã
 export class Starfield extends Phaser.Scene {
   constructor() {
     super({ key: "Starfield", active: true });
@@ -39,7 +40,7 @@ export class Starfield extends Phaser.Scene {
   update(time, delta) {
     for (let i = 0; i < this.max; i++) {
       let perspective = this.distance / (this.distance - this.zz[i]);
-      let x = 400 + this.xx[i] * perspective;
+      let x = 570 + this.xx[i] * perspective;
       let y = 300 + this.yy[i] * perspective;
 
       this.zz[i] += this.speed * (delta / 1000);

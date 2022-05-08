@@ -5,17 +5,21 @@ import { Starfield } from "./scenes/Starfield.js";
 import { Highscore } from "./scenes/Highscore.js";
 import { InputPanel } from "./scenes/InputPanel.js";
 
+//actual window size
+let height = window.innerHeight;
+let width = window.innerWidth;
+
 let config = {
   type: Phaser.AUTO,
   parent: "phaser-example",
-  width: 800,
-  height: 600,
+  width: width,
+  height: height,
   pixelArt: true,
   physics: {
     default: "arcade",
     arcade: {
       gravity: { y: 0 },
-      debug: true,
+      debug: false,
     },
   },
   scene: [Preloader, MainMenu, Game, Starfield, Highscore, InputPanel],

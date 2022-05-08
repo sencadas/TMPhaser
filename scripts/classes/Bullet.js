@@ -1,17 +1,16 @@
 export const Bullet = new Phaser.Class({
   Extends: Phaser.GameObjects.Image,
 
-  initialize:
-    // Bullet Constructor
-    function Bullet(scene) {
-      Phaser.GameObjects.Image.call(this, scene, 0, 0, "bullet");
-      this.speed = 2;
-      this.born = 0;
-      this.direction = 0;
-      this.xSpeed = 0;
-      this.ySpeed = 0;
-      this.setSize(15, 15, true);
-    },
+  // Bullet Constructor
+  initialize: function Bullet(scene) {
+    Phaser.GameObjects.Image.call(this, scene, 0, 0, "bullet");
+    this.speed = 2;
+    this.born = 0;
+    this.direction = 0;
+    this.xSpeed = 0;
+    this.ySpeed = 0;
+    this.setSize(15, 15, true);
+  },
 
   // Fires a bullet from the player to the reticle
   fire: function (shooter, target) {

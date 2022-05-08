@@ -7,6 +7,7 @@ export class Preloader extends Phaser.Scene {
 
   init() {}
 
+  //preload all assets
   preload() {
     // Load in images and sprites
     this.load.image("ship", "assets/img/ship2.png");
