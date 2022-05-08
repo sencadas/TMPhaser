@@ -1,18 +1,25 @@
 import { Bullet } from "../classes/Bullet.js";
 import { Bulletenemy } from "../classes/Bulletenemy.js";
 
+let height = window.innerHeight;
+let width = window.innerWidth;
+
+//wave Control
+var currentEnemies = 0;
+var currentWave = 0;
+var stars;
+var bugs = new Array();
+
 var score = 0;
 var spriteBounds;
-var bugs = new Array();
 var scoreText;
-var counter = 0;
-var wavebugs;
-var waveenemy;
-var wavestars;
-var bullethit;
-//var mothership;
-var player = null;
 var enemy = null;
+
+var counter = 0;
+
+var shotTaken;
+var bullethit;
+var player = null;
 var star = null;
 var healthpoints = null;
 var reticle = null;
@@ -20,7 +27,6 @@ var moveKeys = null;
 var playerBullets = null;
 var enemyBullets = null;
 var playerText;
-//var mothershiphealth;
 var playerhealth;
 var hp1;
 var hp2;
@@ -43,8 +49,8 @@ export class Game extends Phaser.Scene {
       loop: true,
     });
 
-    // Set world bounds
-    this.physics.world.setBounds(-400, -400, 2500, 1900);
+    // Set world bounds ( limites )
+    this.physics.world.setBounds(-400, -400, width * 4, height * 5);
 
     // Add 2 groups for Bullet objects
     playerBullets = this.physics.add.group({
@@ -65,10 +71,10 @@ export class Game extends Phaser.Scene {
     );
 
     // Add background player, enemy, reticle, healthpoint sprites
-    var background2 = this.add.image(800, 600, "background");
-    var background = this.add.image(800, 600, "backgroundpedras");
+    var background = this.add.image(width, height, "background");
 
     var shot = this.sound.add("shot");
+    shotTaken = this.sound.add("shotTaken");
 
     player = this.physics.add.image(400, -400, "ship");
     reticle = this.physics.add.image(400, -400, "target");
@@ -82,26 +88,12 @@ export class Game extends Phaser.Scene {
     hp5 = this.add.image(-150, -250, "target").setScrollFactor(0, 0);
 
     // Set image/sprite properties
-    background2.setOrigin(0.5, 0.5).setDisplaySize(3600, 3200);
-    background.setOrigin(0.5, 0.5).setDisplaySize(2600, 2200);
+    background.setOrigin(0.5, 0.5).setDisplaySize(width * 8, height * 8);
 
-    wavestars = this.time.addEvent({
+    //generate Random Stars
+    stars = this.time.addEvent({
       delay: 40000,
       callback: this.createstars,
-      callbackScope: this,
-      loop: true,
-    });
-
-    waveenemy = this.time.addEvent({
-      delay: 30000 + score * 4,
-      callback: this.createenemy,
-      callbackScope: this,
-      loop: true,
-    });
-
-    wavebugs = this.time.addEvent({
-      delay: 20000 + score * 4,
-      callback: this.createbugs,
       callbackScope: this,
       loop: true,
     });
@@ -122,15 +114,6 @@ export class Game extends Phaser.Scene {
     hp3.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
     hp4.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
     hp5.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-
-    //pedras com yoyo
-    this.tweens.add({
-      targets: background,
-      y: this.game.config.height / 2 + 200,
-      duration: 5000,
-      yoyo: true,
-      repeat: -1,
-    });
 
     //initializer vida do player
     player.health = 10;
@@ -210,15 +193,6 @@ export class Game extends Phaser.Scene {
       controlConfig
     );
 
-    this.add
-      .bitmapText(
-        -300,
-        -800,
-        "arcade",
-        "Who to play:\n\nDefende the base from the bugs\nQ-E to zoom in and out\nW-A-S-D to fly the ship \nMouse1 to shoot the enemies\nThe game ends when your ship or the base dies."
-      )
-      .setTint(0x00ff00);
-
     //Score
     scoreText = this.add
       .bitmapText(-220, -200, "arcade", "Score: 0")
@@ -240,6 +214,13 @@ export class Game extends Phaser.Scene {
 
     if (moveKeys["up"].isDown) player.y -= 10;
     if (moveKeys["down"].isDown) player.y += 10;
+
+    console.log(currentEnemies + " Inimigos Atuais");
+    //create new Wave
+    if (currentEnemies === 0) {
+      currentWave++;
+      this.createWave();
+    }
 
     // Rotates player to face towards reticle
     player.rotation = Phaser.Math.Angle.Between(
@@ -285,6 +266,7 @@ export class Game extends Phaser.Scene {
   createbugs() {
     for (var i = 0; i < 5 + score / 2; i++) {
       const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+      currentEnemies++;
 
       bugs[i] = this.physics.add.image(pos.x, pos.y, "bug").setScale(0.2);
       bugs[i].name = "bug" + i;
@@ -303,13 +285,14 @@ export class Game extends Phaser.Scene {
       }
 
       this.physics.add.collider(player, bugs[i], this.playerHitCallback);
-      // this.physics.add.overlap(mothership, bugs[i], this.damageBase);
       this.physics.add.collider(bugs[i], bullethit, this.killbugs);
     }
   }
 
   createenemy() {
     const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+
+    currentEnemies++;
 
     enemy = this.physics.add.image(pos.x, pos.y, "enemy");
     enemy
@@ -330,6 +313,22 @@ export class Game extends Phaser.Scene {
     this.physics.add.overlap(player, star, this.buffs);
   }
 
+  //generates a New Wave
+  createWave() {
+    var WaveText = this.add
+      .bitmapText(width / 1.5, 1, "arcade", "Starting Wave " + currentWave, 70)
+      .setTint(0xff0000)
+      .setScrollFactor(0, 0)
+      .setOrigin(0.6, 0.2);
+
+    this.createbugs();
+    this.createenemy();
+
+    setTimeout(() => {
+      WaveText.setVisible(false);
+    }, 6000);
+  }
+
   //---------------------------------------------------------------------------------------------
   //-------------------------Bullet Actions and Buffs--------------------------------------------
   //---------------------------------------------------------------------------------------------
@@ -343,6 +342,7 @@ export class Game extends Phaser.Scene {
       if (enemyHit.health <= 0) {
         score = score + 3;
         scoreText.setText("Score: " + score);
+        currentEnemies--;
         enemyHit.destroy();
       }
 
@@ -353,11 +353,11 @@ export class Game extends Phaser.Scene {
 
   killbugs(bug, bulletHit) {
     // Reduce health of enemy
-
     bug.health = bug.health - 1;
 
     score++;
     scoreText.setText("Score: " + score);
+    currentEnemies--;
     bug.destroy();
 
     // Destroy bullet
@@ -372,18 +372,13 @@ export class Game extends Phaser.Scene {
     star.destroy();
   }
 
-  damageBase(playerHit, bulletHit) {
-    // Reduce health of player
-    if (bulletHit.active === true && playerHit.active === true) {
-      playerHit.health = playerHit.health - 1;
-      score--;
-      scoreText.setText("Score: " + score);
-
-      bulletHit.destroy();
-    }
-  }
-
   playerHitCallback(playerHit, bulletHit) {
+    shotTaken.play();
+    //caso aconteça colisão entre bug e nave decrementar do numero total de inimigos
+    if (bulletHit.texture.key === "bug") {
+      console.log("Colidi com um bug");
+      currentEnemies--;
+    }
     // Reduce health of player
     if (bulletHit.active === true && playerHit.active === true) {
       playerHit.health = playerHit.health - 1;
