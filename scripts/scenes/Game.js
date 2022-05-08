@@ -108,7 +108,7 @@ export class Game extends Phaser.Scene {
 
     //generate Random life event
     this.time.addEvent({
-      delay: 5,
+      delay: this.randomIntFromInterval(40000, 70000),
       callback: this.createLife,
       callbackScope: this,
       loop: true,
@@ -343,6 +343,7 @@ export class Game extends Phaser.Scene {
   }
 
   createLife() {
+    //random position
     const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
 
     life = this.physics.add.image(pos.x, pos.y, "heart");
