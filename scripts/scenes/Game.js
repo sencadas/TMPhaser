@@ -8,7 +8,11 @@ let width = window.innerWidth;
 var currentEnemies = 0;
 var currentWave = 0;
 var stars;
+var bugLife = 0.7;
+
 var bugs = new Array();
+var bulletPower = 1;
+var bulletPowerText;
 
 var score = 0;
 var spriteBounds;
@@ -21,6 +25,7 @@ var shotTaken;
 var bullethit;
 var player = null;
 var star = null;
+var life = null;
 var healthpoints = null;
 var reticle = null;
 var moveKeys = null;
@@ -33,7 +38,7 @@ var hp2;
 var hp3;
 var hp4;
 var hp5;
-
+var soundLevelUp;
 export class Game extends Phaser.Scene {
   constructor() {
     super({ key: "game" });
@@ -47,6 +52,7 @@ export class Game extends Phaser.Scene {
     //Start Sound
     this.sound.play("gameSound", {
       loop: true,
+      volume: 0.6,
     });
 
     // Set world bounds ( limites )
@@ -57,6 +63,7 @@ export class Game extends Phaser.Scene {
       classType: Bullet,
       runChildUpdate: true,
     });
+
     enemyBullets = this.physics.add.group({
       classType: Bulletenemy,
       runChildUpdate: true,
@@ -73,6 +80,7 @@ export class Game extends Phaser.Scene {
     // Add background player, enemy, reticle, healthpoint sprites
     var background = this.add.image(width, height, "background");
 
+    soundLevelUp = this.sound.add("levelUp");
     var shot = this.sound.add("shot");
     shotTaken = this.sound.add("shotTaken");
 
@@ -90,10 +98,18 @@ export class Game extends Phaser.Scene {
     // Set image/sprite properties
     background.setOrigin(0.5, 0.5).setDisplaySize(width * 8, height * 8);
 
-    //generate Random Stars
-    stars = this.time.addEvent({
-      delay: 40000,
+    //generate Random life event
+    this.time.addEvent({
+      delay: this.randomIntFromInterval(50000, 60000),
       callback: this.createstars,
+      callbackScope: this,
+      loop: true,
+    });
+
+    //generate Random life event
+    this.time.addEvent({
+      delay: 5,
+      callback: this.createLife,
       callbackScope: this,
       loop: true,
     });
@@ -200,6 +216,13 @@ export class Game extends Phaser.Scene {
       .setScrollFactor(0, 0)
       .setOrigin(0.6, 0.2);
 
+    //Bullet Power
+    bulletPowerText = this.add
+      .bitmapText(-220, -140, "arcade", "Bullet Power: 1")
+      .setTint(0xff0000)
+      .setScrollFactor(0, 0)
+      .setOrigin(0.6, 0.2);
+
     //vida do player
     playerhealth = this.add
       .bitmapText(-50, -270, "arcade", "10")
@@ -264,6 +287,8 @@ export class Game extends Phaser.Scene {
   //------------------------------ Create Objects  -----------------------------------------------
   //----------------------------------------------------------------------------------------------
   createbugs() {
+    bugLife = bugLife * 1.2;
+
     for (var i = 0; i < 5 + score / 2; i++) {
       const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
       currentEnemies++;
@@ -275,8 +300,12 @@ export class Game extends Phaser.Scene {
         Phaser.Math.Between(100, 300) + score,
         Phaser.Math.Between(100, 300) + score
       );
+
+      //add colisions
       bugs[i].setBounce(1).setCollideWorldBounds(true);
-      bugs[i].health = 1;
+
+      //bug a cada wave fica com mais vida + 0.2 do que o turno passado
+      bugs[i].health = bugLife;
 
       if (Math.random() > 0.5) {
         bugs[i].body.velocity.x *= -1;
@@ -310,7 +339,16 @@ export class Game extends Phaser.Scene {
     star = this.physics.add.image(pos.x, pos.y, "star1");
     star.setOrigin(0.5, 0.5).setDisplaySize(50, 50).setCollideWorldBounds(true);
 
-    this.physics.add.overlap(player, star, this.buffs);
+    this.physics.add.overlap(player, star, this.buffPower);
+  }
+
+  createLife() {
+    const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+
+    life = this.physics.add.image(pos.x, pos.y, "heart");
+    life.setOrigin(0.5, 0.5).setDisplaySize(50, 50).setCollideWorldBounds(true);
+
+    this.physics.add.overlap(player, life, this.buffLife);
   }
 
   //generates a New Wave
@@ -336,7 +374,7 @@ export class Game extends Phaser.Scene {
   enemyHitCallback(enemyHit, bulletHit) {
     // Reduce health of enemy
     if (bulletHit.active === true && enemyHit.active === true) {
-      enemyHit.health = enemyHit.health - 1;
+      enemyHit.health = enemyHit.health - bulletPower;
 
       // Kill enemy if health <= 0
       if (enemyHit.health <= 0) {
@@ -353,22 +391,31 @@ export class Game extends Phaser.Scene {
 
   killbugs(bug, bulletHit) {
     // Reduce health of enemy
-    bug.health = bug.health - 1;
+    bug.health = bug.health - bulletPower;
 
-    score++;
-    scoreText.setText("Score: " + score);
-    currentEnemies--;
-    bug.destroy();
+    if (bug.health <= 0) {
+      score++;
+      scoreText.setText("Score: " + score);
+      currentEnemies--;
+      bug.destroy();
+    }
 
     // Destroy bullet
     bulletHit.destroy();
   }
 
-  buffs(player, star) {
-    player.health = player.health + 3;
-    playerhealth.setText(player.health);
-
+  buffPower(player, star) {
+    bulletPower++;
+    // playerhealth.setText(player.health);
+    soundLevelUp.play({ volume: 1.5 });
+    bulletPowerText.setText("Bullet Power: " + bulletPower);
     star.destroy();
+  }
+  buffLife(player, life) {
+    player.health = player.health + 2;
+    playerhealth.setText(player.health);
+    soundLevelUp.play({ volume: 1.5 });
+    life.destroy();
   }
 
   playerHitCallback(playerHit, bulletHit) {
@@ -419,6 +466,12 @@ export class Game extends Phaser.Scene {
         gameObject.physics.add.collider(player, bullet, this.playerHitCallback);
       }
     }
+  }
+
+  //get random value timer
+  randomIntFromInterval(min, max) {
+    // min and max included
+    return Math.floor(Math.random() * (max - min + 1) + min);
   }
 
   //-------------------------------------------------------------------------------------

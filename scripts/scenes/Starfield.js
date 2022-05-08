@@ -8,7 +8,7 @@ export class Starfield extends Phaser.Scene {
     this.distance = 300;
     this.speed = 250;
 
-    this.max = 500;
+    this.max = 400;
     this.xx = [];
     this.yy = [];
     this.zz = [];
