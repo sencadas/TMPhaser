@@ -56,7 +56,7 @@ export class Game extends Phaser.Scene {
     });
 
     // Set world bounds ( limites )
-    this.physics.world.setBounds(-400, -400, width * 4, height * 5);
+    this.physics.world.setBounds(-500, -600, width * 4, height * 4);
 
     // Add 2 groups for Bullet objects
     playerBullets = this.physics.add.group({
@@ -98,9 +98,9 @@ export class Game extends Phaser.Scene {
     // Set image/sprite properties
     background.setOrigin(0.5, 0.5).setDisplaySize(width * 8, height * 8);
 
-    //generate Random life event
+    //generate Random Power
     this.time.addEvent({
-      delay: this.randomIntFromInterval(50000, 60000),
+      delay: this.randomIntFromInterval(30000, 40000),
       callback: this.createstars,
       callbackScope: this,
       loop: true,
@@ -108,7 +108,7 @@ export class Game extends Phaser.Scene {
 
     //generate Random life event
     this.time.addEvent({
-      delay: this.randomIntFromInterval(40000, 70000),
+      delay: this.randomIntFromInterval(40000, 150000),
       callback: this.createLife,
       callbackScope: this,
       loop: true,

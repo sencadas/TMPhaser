@@ -15,13 +15,13 @@ export class MainMenu extends Phaser.Scene {
     }
 
     var title = this.add
-      .bitmapText(width / 4.3, 100, "arcade", "Welcome to Space Defense")
+      .bitmapText(width * 0.25, 100, "arcade", "Welcome to Space Defense")
       .setTint(0xff00ff);
 
     var madeBy = this.add
       .bitmapText(
         width / 3,
-        600,
+        height - 50,
         "arcade",
         "Made By: Joao Sencadas N_20381 & Ruben Morim N_20399",
         10
@@ -39,7 +39,7 @@ export class MainMenu extends Phaser.Scene {
 
     this.tweens.add({
       targets: madeBy,
-      y: 550,
+      y: height - 100,
       duration: 5000,
       yoyo: true,
       repeat: -1,
@@ -59,7 +59,7 @@ export class MainMenu extends Phaser.Scene {
       this
     );
 
-    var helpButton = this.add.image(width / 1.5, height - 140, "helpButton");
+    var helpButton = this.add.image(width / 1.5, height - 200, "helpButton");
     helpButton.setOrigin(0.5, 0.5).setDisplaySize(52, 52);
 
     helpButton.setInteractive();

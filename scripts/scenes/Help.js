@@ -27,7 +27,7 @@ export class Help extends Phaser.Scene {
         width / 3,
         240,
         "arcade",
-        "Game Keys:\n\nQ-E to zoom in and out the map\nW-A-S-D to fly the ship \nMouse1 to shoot the enemies\n",
+        "Game Keys:\n\nQ-E to zoom in and out the map\nW-A-S-D to fly the ship \nMouse1 to shoot the enemies\nP to pause the game",
         14
       )
       .setTint(0xff00ff);
