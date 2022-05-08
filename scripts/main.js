@@ -19,7 +19,7 @@ let config = {
     default: "arcade",
     arcade: {
       gravity: { y: 0 },
-      debug: true,
+      debug: false,
     },
   },
   scene: [Preloader, MainMenu, Game, Starfield, Highscore, InputPanel],
