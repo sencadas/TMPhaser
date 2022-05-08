@@ -1,16 +1,16 @@
-export const Bulletenemy = new Phaser.Class({
+export const BulletBoss = new Phaser.Class({
   Extends: Phaser.GameObjects.Image,
 
   initialize:
     // Bullet Constructor
     function Bullet(scene) {
-      Phaser.GameObjects.Image.call(this, scene, 0, 0, "bulletenemy");
-      this.speed = 2;
+      Phaser.GameObjects.Image.call(this, scene, 0, 0, "shotboss");
+      this.speed = 2.2;
       this.born = 0;
       this.direction = 0;
       this.xSpeed = 0;
       this.ySpeed = 0;
-      this.setSize(12, 12, true);
+      this.setSize(8, 8, true);
     },
 
   // Fires a bullet from the player to the reticle

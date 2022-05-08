@@ -7,7 +7,7 @@ export class Pause extends Phaser.Scene {
 
   create() {
     var title = this.add
-      .bitmapText(width / 1.9, 100, "arcade", "Pause")
+      .bitmapText(width / 2.2, 100, "arcade", "Pause")
       .setTint(0xff00ff);
 
     this.tweens.add({

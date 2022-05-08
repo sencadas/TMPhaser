@@ -1,5 +1,6 @@
 import { Bullet } from "../classes/Bullet.js";
 import { Bulletenemy } from "../classes/Bulletenemy.js";
+import { BulletBoss } from "../classes/BossBullet.js";
 
 let height = window.innerHeight;
 let width = window.innerWidth;
@@ -18,9 +19,8 @@ var score = 0;
 var spriteBounds;
 var scoreText;
 var enemy = null;
-
+var boss = null;
 var counter = 0;
-
 var shotTaken;
 var bullethit;
 var player = null;
@@ -31,6 +31,7 @@ var reticle = null;
 var moveKeys = null;
 var playerBullets = null;
 var enemyBullets = null;
+var bossBullets = null;
 var playerText;
 var playerhealth;
 var hp1;
@@ -69,6 +70,11 @@ export class Game extends Phaser.Scene {
       runChildUpdate: true,
     });
 
+    bossBullets = this.physics.add.group({
+      classType: BulletBoss,
+      runChildUpdate: true,
+    });
+
     score = 0;
 
     spriteBounds = Phaser.Geom.Rectangle.Inflate(
@@ -86,6 +92,7 @@ export class Game extends Phaser.Scene {
 
     player = this.physics.add.image(400, -400, "ship");
     reticle = this.physics.add.image(400, -400, "target");
+    boss = this;
     enemy = this;
 
     //vidas do player
@@ -100,7 +107,7 @@ export class Game extends Phaser.Scene {
 
     //generate Random Power
     this.time.addEvent({
-      delay: this.randomIntFromInterval(30000, 40000),
+      delay: this.randomIntFromInterval(5000, 60000),
       callback: this.createstars,
       callbackScope: this,
       loop: true,
@@ -122,7 +129,7 @@ export class Game extends Phaser.Scene {
 
     reticle
       .setOrigin(0.5, 0.5)
-      .setDisplaySize(25, 25)
+      .setDisplaySize(40, 40)
       .setCollideWorldBounds(false);
 
     hp1.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
@@ -158,6 +165,8 @@ export class Game extends Phaser.Scene {
         if (bullethit) {
           bullethit.fire(player, reticle);
           this.physics.add.collider(enemy, bullethit, this.enemyHitCallback);
+
+          this.physics.add.collider(boss, bullethit, this.enemyHitCallback);
 
           this.physics.add.overlap(bugs, bullethit, this.killbugs);
         }
@@ -281,6 +290,15 @@ export class Game extends Phaser.Scene {
         player.y
       );
 
+    // Rotates enemy to face towards player
+    if (boss != null)
+      boss.rotation = Phaser.Math.Angle.Between(
+        boss.x,
+        enemy.y,
+        player.x,
+        player.y
+      );
+
     //Make reticle move with player
     reticle.body.velocity.x = player.body.velocity.x;
     reticle.body.velocity.y = player.body.velocity.y;
@@ -292,7 +310,8 @@ export class Game extends Phaser.Scene {
     //this.constrainReticle(reticle);
 
     // Make enemy fire
-    this.enemyFire(enemy, player, time, this);
+    this.enemyFire(enemy, player, time, this, "miniBoss");
+    this.enemyFire(boss, player, time, this, "boss");
 
     if (player.health <= 0) {
       this.scene.start("Highscore", score);
@@ -352,6 +371,22 @@ export class Game extends Phaser.Scene {
     enemy.lastFired = 0;
   }
 
+  createBoss() {
+    //random positiom
+    const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+
+    currentEnemies++;
+
+    boss = this.physics.add.image(pos.x, pos.y, "boss");
+    boss
+      .setOrigin(0.5, 0.5)
+      .setDisplaySize(600 + score, 600 + score)
+      .setCollideWorldBounds(true);
+
+    boss.health = 17 + score / 4;
+    boss.lastFired = 0;
+  }
+
   createstars() {
     const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
 
@@ -379,8 +414,20 @@ export class Game extends Phaser.Scene {
       .setScrollFactor(0, 0)
       .setOrigin(0.6, 0.2);
 
-    this.createbugs();
-    this.createenemy();
+    if (currentWave % 10 === 0) {
+      WaveText.setText("MEGA ROUND ! - " + currentWave);
+      this.createenemy();
+      this.createBoss();
+      this.createbugs();
+    } else if (currentWave === 1) {
+      WaveText.setText("BOSS ROUND! FIGHT!! - " + currentWave);
+      this.createBoss();
+      this.createenemy();
+    } else {
+      WaveText.setText("Starting Wave - " + currentWave);
+      this.createbugs();
+      this.createenemy();
+    }
 
     setTimeout(() => {
       WaveText.setVisible(false);
@@ -469,16 +516,20 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  enemyFire(enemy, player, time, gameObject) {
+  enemyFire(enemy, player, time, gameObject, type) {
     if (enemy.active === false) {
       return;
     }
 
     if (time - enemy.lastFired > 1000) {
       enemy.lastFired = time;
-
-      // Get bullet from bullets group
-      var bullet = enemyBullets.get().setActive(true).setVisible(true);
+      var bullet;
+      if (type === "boss") {
+        // Get bullet from bullets group
+        bullet = bossBullets.get().setActive(true).setVisible(true);
+      } else {
+        bullet = enemyBullets.get().setActive(true).setVisible(true);
+      }
 
       if (bullet) {
         bullet.fire(enemy, player);
@@ -486,12 +537,6 @@ export class Game extends Phaser.Scene {
         gameObject.physics.add.collider(player, bullet, this.playerHitCallback);
       }
     }
-  }
-
-  //get random value timer
-  randomIntFromInterval(min, max) {
-    // min and max included
-    return Math.floor(Math.random() * (max - min + 1) + min);
   }
 
   //-------------------------------------------------------------------------------------
@@ -527,5 +572,11 @@ export class Game extends Phaser.Scene {
 
     if (distY > 600) reticle.y = player.y + 600;
     else if (distY < -600) reticle.y = player.y - 600;
+  }
+
+  //get random value timer
+  randomIntFromInterval(min, max) {
+    // min and max included
+    return Math.floor(Math.random() * (max - min + 1) + min);
   }
 }

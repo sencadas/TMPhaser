@@ -23,6 +23,8 @@ export class Preloader extends Phaser.Scene {
     this.load.image("background", "assets/img/sky.jpg");
     this.load.image("goBack", "assets/img/goBack.png");
     this.load.image("heart", "assets/img/heart.webp");
+    this.load.image("boss", "assets/img/ship.gif");
+    this.load.image("shotboss", "assets/img/shotBoss.png");
 
     //Font
     this.load.bitmapFont(
