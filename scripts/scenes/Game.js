@@ -234,6 +234,54 @@ export class Game extends Phaser.Scene {
       .setOrigin(0.6, 0.2);
   }
 
+  update(time, delta) {
+    if (moveKeys["left"].isDown) player.x -= 10;
+    if (moveKeys["right"].isDown) player.x += 10;
+
+    if (moveKeys["up"].isDown) player.y -= 10;
+    if (moveKeys["down"].isDown) player.y += 10;
+
+    // Rotates player to face towards reticle
+    player.rotation = Phaser.Math.Angle.Between(
+      player.x,
+      player.y,
+      reticle.x,
+      reticle.y
+    );
+
+    // Rotates enemy to face towards player
+    if (enemy != null)
+      enemy.rotation = Phaser.Math.Angle.Between(
+        enemy.x,
+        enemy.y,
+        player.x,
+        player.y
+      );
+
+    //Make reticle move with player
+    reticle.body.velocity.x = player.body.velocity.x;
+    reticle.body.velocity.y = player.body.velocity.y;
+
+    // Constrain velocity of player
+    this.constrainVelocity(player, 500);
+
+    // Constrain position of constrainReticle
+    this.constrainReticle(reticle);
+
+    // Make enemy fire
+    this.enemyFire(enemy, player, time, this);
+
+    if (player.health <= 0) {
+      this.scene.start("Highscore", score);
+      this.sound.stopAll();
+    }
+
+    this.controls.update(delta);
+  }
+
+  //----------------------------------------------------------------------------------------------
+  //------------------------------ Create Objects  -----------------------------------------------
+  //----------------------------------------------------------------------------------------------
   createbugs() {
     for (var i = 0; i < 5 + score / 2; i++) {
       const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
@@ -259,6 +307,7 @@ export class Game extends Phaser.Scene {
       this.physics.add.collider(bugs[i], bullethit, this.killbugs);
     }
   }
+
   createenemy() {
     const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
 
@@ -280,6 +329,10 @@ export class Game extends Phaser.Scene {
 
     this.physics.add.overlap(player, star, this.buffs);
   }
+
+  //---------------------------------------------------------------------------------------------
+  //-------------------------Bullet Actions and Buffs--------------------------------------------
+  //---------------------------------------------------------------------------------------------
 
   enemyHitCallback(enemyHit, bulletHit) {
     // Reduce health of enemy
@@ -374,6 +427,10 @@ export class Game extends Phaser.Scene {
     }
   }
 
+  //-------------------------------------------------------------------------------------
+  //-------------------------Constraint Physics -----------------------------------------
+  //-------------------------------------------------------------------------------------
+
   // Ensures sprite speed doesnt exceed maxVelocity while update is called
   constrainVelocity(sprite, maxVelocity) {
     if (!sprite || !sprite.body) return;
@@ -403,50 +460,5 @@ export class Game extends Phaser.Scene {
 
     if (distY > 600) reticle.y = player.y + 600;
     else if (distY < -600) reticle.y = player.y - 600;
-  }
-
-  update(time, delta) {
-    if (moveKeys["left"].isDown) player.x -= 10;
-    if (moveKeys["right"].isDown) player.x += 10;
-
-    if (moveKeys["up"].isDown) player.y -= 10;
-    if (moveKeys["down"].isDown) player.y += 10;
-
-    // Rotates player to face towards reticle
-    player.rotation = Phaser.Math.Angle.Between(
-      player.x,
-      player.y,
-      reticle.x,
-      reticle.y
-    );
-
-    // Rotates enemy to face towards player
-    if (enemy != null)
-      enemy.rotation = Phaser.Math.Angle.Between(
-        enemy.x,
-        enemy.y,
-        player.x,
-        player.y
-      );
-
-    //Make reticle move with player
-    reticle.body.velocity.x = player.body.velocity.x;
-    reticle.body.velocity.y = player.body.velocity.y;
-
-    // Constrain velocity of player
-    this.constrainVelocity(player, 500);
-
-    // Constrain position of constrainReticle
-    this.constrainReticle(reticle);
-
-    // Make enemy fire
-    this.enemyFire(enemy, player, time, this);
-
-    if (player.health <= 0) {
-      this.scene.start("Highscore", score);
-      this.sound.stopAll();
-    }
-
-    this.controls.update(delta);
   }
 }
