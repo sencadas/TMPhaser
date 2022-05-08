@@ -1,12 +1,19 @@
 let height = window.innerHeight;
 let width = window.innerWidth;
-
+let isCreated = false;
 export class MainMenu extends Phaser.Scene {
   constructor() {
     super({ key: "mainmenu" });
   }
 
   create() {
+    if (!isCreated) {
+      isCreated = true;
+      this.sound.play("menuSound", {
+        loop: true,
+      });
+    }
+
     var title = this.add
       .bitmapText(width / 4.3, 100, "arcade", "Welcome to Space Defense")
       .setTint(0xff00ff);
@@ -14,7 +21,7 @@ export class MainMenu extends Phaser.Scene {
     var madeBy = this.add
       .bitmapText(
         width / 3,
-        500,
+        600,
         "arcade",
         "Made By: Joao Sencadas N_20381 & Ruben Morim N_20399",
         10
@@ -38,15 +45,29 @@ export class MainMenu extends Phaser.Scene {
       repeat: -1,
     });
 
-    var bg = this.add.image(width / 2, height / 2, "playbutton");
-    bg.setOrigin(0.5, 0.5).setDisplaySize(200, 200);
+    var playButton = this.add.image(width / 2, height / 2, "playbutton");
+    playButton.setOrigin(0.5, 0.5).setDisplaySize(200, 200);
 
-    bg.setInteractive();
+    playButton.setInteractive();
 
-    bg.once(
+    playButton.once(
       "pointerup",
       function () {
         this.scene.start("game");
+        this.sound.stopAll();
+      },
+      this
+    );
+
+    var helpButton = this.add.image(width / 1.5, height - 140, "helpButton");
+    helpButton.setOrigin(0.5, 0.5).setDisplaySize(52, 52);
+
+    helpButton.setInteractive();
+
+    helpButton.once(
+      "pointerup",
+      function () {
+        this.scene.start("help");
       },
       this
     );

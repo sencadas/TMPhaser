@@ -365,10 +365,9 @@ export class Game extends Phaser.Scene {
   }
 
   buffs(player, star) {
-    // Reduce health of enemy
-
     player.health = player.health + 3;
     playerhealth.setText(player.health);
+
     star.destroy();
   }
 
