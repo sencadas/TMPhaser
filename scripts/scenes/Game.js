@@ -172,14 +172,14 @@ export class Game extends Phaser.Scene {
     this.game.input.mouse.requestPointerLock();
 
     // Exit pointer lock when Q or escape (by default) is pressed.
-    this.input.keyboard.on(
+    /* this.input.keyboard.on(
       "keydown_Q",
       function (event) {
         if (game.input.mouse.locked) game.input.mouse.releasePointerLock();
       },
       0,
       this
-    );
+    ); */
 
     // Move reticle upon locked pointer move
     this.input.on(
@@ -235,6 +235,24 @@ export class Game extends Phaser.Scene {
       .setTint(0xff0000)
       .setScrollFactor(0, 0)
       .setOrigin(0.6, 0.2);
+
+    this.input.keyboard.on(
+      "keydown-P",
+      function (event) {
+        console.log("pause");
+        this.scene.pause();
+        this.scene.launch("pause");
+      },
+      this
+    );
+
+    this.events.on("pause", function () {
+      console.log("Scene A paused");
+    });
+
+    this.events.on("resume", function () {
+      console.log("Scene A resumed");
+    });
   }
 
   createbugs() {

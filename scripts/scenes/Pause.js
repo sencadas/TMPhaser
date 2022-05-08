@@ -16,15 +16,11 @@ export class Pause extends Phaser.Scene {
       repeat: -1,
     });
 
-    var bg = this.add.image(400, 400, "playbutton");
-    bg.setOrigin(0.5, 0.5).setDisplaySize(200, 200);
-
-    bg.setInteractive();
-
-    bg.once(
-      "pointerup",
+    this.input.keyboard.on(
+      "keydown-P",
       function () {
-        this.scene.start("game");
+        this.scene.resume("game");
+        this.scene.stop();
       },
       this
     );
