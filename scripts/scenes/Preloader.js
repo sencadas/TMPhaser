@@ -19,19 +19,28 @@ export class Preloader extends Phaser.Scene {
     this.load.image("playbutton", "assets/img/play.png");
     this.load.image("bulletenemy", "assets/img/lase3.png");
     this.load.image("target", "assets/img/crossair.png");
-    this.load.image("backgroundpedras", "assets/img/pedras.png");
+    this.load.image("helpButton", "assets/img/helpButton.png");
     this.load.image("background", "assets/img/sky.jpg");
+    this.load.image("goBack", "assets/img/goBack.png");
+    this.load.image("heart", "assets/img/heart.webp");
 
+    //Font
     this.load.bitmapFont(
       "arcade",
       "assets/input/arcade.png",
       "assets/input/arcade.xml"
     );
 
+    //audio
     this.load.audio("shot", "assets/audio/shot.mp3");
+    this.load.audio("levelUp", "assets/audio/levelUp.mp3");
+    this.load.audio("menuSound", "assets/audio/menu_sound.mp3");
+    this.load.audio("gameSound", "assets/audio/gamesound.mp3");
+    this.load.audio("shotTaken", "assets/audio/explosion_sound.mp3");
   }
 
   create() {
+    //start another scene
     this.scene.start("mainmenu");
   }
 }

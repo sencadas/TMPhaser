@@ -5,6 +5,7 @@ import { Starfield } from "./scenes/Starfield.js";
 import { Highscore } from "./scenes/Highscore.js";
 import { InputPanel } from "./scenes/InputPanel.js";
 import { Pause } from "./scenes/Pause.js";
+import { Help } from "./scenes/Help.js";
 
 //actual window size
 let height = window.innerHeight;
@@ -23,7 +24,16 @@ let config = {
       debug: false,
     },
   },
-  scene: [Preloader, MainMenu, Game, Pause, Starfield, Highscore, InputPanel],
+  scene: [
+    Preloader,
+    MainMenu,
+    Game,
+    Pause,
+    Help,
+    Starfield,
+    Highscore,
+    InputPanel,
+  ],
 };
 
 let game = new Phaser.Game(config);

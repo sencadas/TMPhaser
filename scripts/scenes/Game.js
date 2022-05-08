@@ -1,33 +1,44 @@
 import { Bullet } from "../classes/Bullet.js";
 import { Bulletenemy } from "../classes/Bulletenemy.js";
 
+let height = window.innerHeight;
+let width = window.innerWidth;
+
+//wave Control
+var currentEnemies = 0;
+var currentWave = 0;
+var stars;
+var bugLife = 0.7;
+
+var bugs = new Array();
+var bulletPower = 1;
+var bulletPowerText;
+
 var score = 0;
 var spriteBounds;
-var bugs = new Array();
 var scoreText;
-var counter = 0;
-var wavebugs;
-var waveenemy;
-var wavestars;
-var bullethit;
-//var mothership;
-var player = null;
 var enemy = null;
+
+var counter = 0;
+
+var shotTaken;
+var bullethit;
+var player = null;
 var star = null;
+var life = null;
 var healthpoints = null;
 var reticle = null;
 var moveKeys = null;
 var playerBullets = null;
 var enemyBullets = null;
 var playerText;
-//var mothershiphealth;
 var playerhealth;
 var hp1;
 var hp2;
 var hp3;
 var hp4;
 var hp5;
-
+var soundLevelUp;
 export class Game extends Phaser.Scene {
   constructor() {
     super({ key: "game" });
@@ -38,15 +49,21 @@ export class Game extends Phaser.Scene {
   }
 
   create() {
-    // Set world bounds
-    this.physics.world.setBounds(-400, -400, 2500, 1900);
-    //this.physics.world.setBounds(0, 0, 1600, 1200);
+    //Start Sound
+    this.sound.play("gameSound", {
+      loop: true,
+      volume: 0.6,
+    });
+
+    // Set world bounds ( limites )
+    this.physics.world.setBounds(-400, -400, width * 4, height * 5);
 
     // Add 2 groups for Bullet objects
     playerBullets = this.physics.add.group({
       classType: Bullet,
       runChildUpdate: true,
     });
+
     enemyBullets = this.physics.add.group({
       classType: Bulletenemy,
       runChildUpdate: true,
@@ -61,15 +78,17 @@ export class Game extends Phaser.Scene {
     );
 
     // Add background player, enemy, reticle, healthpoint sprites
-    var background2 = this.add.image(800, 600, "background");
-    var background = this.add.image(800, 600, "backgroundpedras");
+    var background = this.add.image(width, height, "background");
 
+    soundLevelUp = this.sound.add("levelUp");
     var shot = this.sound.add("shot");
+    shotTaken = this.sound.add("shotTaken");
 
     player = this.physics.add.image(400, -400, "ship");
     reticle = this.physics.add.image(400, -400, "target");
-    //mothership = this.physics.add.image(800, 700, "base");
     enemy = this;
+
+    //vidas do player
     hp1 = this.add.image(-350, -250, "target").setScrollFactor(0, 0);
     hp2 = this.add.image(-300, -250, "target").setScrollFactor(0, 0);
     hp3 = this.add.image(-250, -250, "target").setScrollFactor(0, 0);
@@ -77,30 +96,24 @@ export class Game extends Phaser.Scene {
     hp5 = this.add.image(-150, -250, "target").setScrollFactor(0, 0);
 
     // Set image/sprite properties
-    background2.setOrigin(0.5, 0.5).setDisplaySize(3600, 3200);
-    background.setOrigin(0.5, 0.5).setDisplaySize(2600, 2200);
-    /* mothership
-      .setOrigin(0.5, 0.5)
-      .setDisplaySize(600, 400)
-      .setCollideWorldBounds(true); */
-    wavestars = this.time.addEvent({
-      delay: 40000,
+    background.setOrigin(0.5, 0.5).setDisplaySize(width * 8, height * 8);
+
+    //generate Random life event
+    this.time.addEvent({
+      delay: this.randomIntFromInterval(50000, 60000),
       callback: this.createstars,
       callbackScope: this,
       loop: true,
     });
-    waveenemy = this.time.addEvent({
-      delay: 30000 + score * 4,
-      callback: this.createenemy,
+
+    //generate Random life event
+    this.time.addEvent({
+      delay: this.randomIntFromInterval(40000, 70000),
+      callback: this.createLife,
       callbackScope: this,
       loop: true,
     });
-    wavebugs = this.time.addEvent({
-      delay: 20000 + score * 4,
-      callback: this.createbugs,
-      callbackScope: this,
-      loop: true,
-    });
+
     player
       .setOrigin(0.5, 0.5)
       .setDisplaySize(132, 120)
@@ -111,31 +124,15 @@ export class Game extends Phaser.Scene {
       .setOrigin(0.5, 0.5)
       .setDisplaySize(25, 25)
       .setCollideWorldBounds(false);
+
     hp1.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
     hp2.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
     hp3.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
     hp4.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
     hp5.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
 
-    //pedras com yoyo
-    this.tweens.add({
-      targets: background,
-      y: this.game.config.height / 2 + 200,
-      duration: 5000,
-      yoyo: true,
-      repeat: -1,
-    });
-
-    /* this.tweens.add({
-      targets: mothership,
-      y: this.game.config.height / 2 + 200,
-      duration: 5000,
-      yoyo: true,
-      repeat: -1,
-    }); */
-
+    //initializer vida do player
     player.health = 10;
-    // mothership.health = 40;
 
     // Set camera properties
     this.cameras.main.zoom = 0.5;
@@ -212,24 +209,21 @@ export class Game extends Phaser.Scene {
       controlConfig
     );
 
-    this.add
-      .bitmapText(
-        -300,
-        -800,
-        "arcade",
-        "Who to play:\n\nDefende the base from the bugs\nQ-E to zoom in and out\nW-A-S-D to fly the ship \nMouse1 to shoot the enemies\nThe game ends when your ship or the base dies."
-      )
-      .setTint(0x00ff00);
+    //Score
     scoreText = this.add
       .bitmapText(-220, -200, "arcade", "Score: 0")
       .setTint(0xff0000)
       .setScrollFactor(0, 0)
       .setOrigin(0.6, 0.2);
-    /* mothershiphealth = this.add
-      .bitmapText(500, -270, "arcade", "Base health: 50")
+
+    //Bullet Power
+    bulletPowerText = this.add
+      .bitmapText(-220, -140, "arcade", "Bullet Power: 1")
       .setTint(0xff0000)
       .setScrollFactor(0, 0)
-      .setOrigin(0.6, 0.2); */
+      .setOrigin(0.6, 0.2);
+
+    //vida do player
     playerhealth = this.add
       .bitmapText(-50, -270, "arcade", "10")
       .setTint(0xff0000)
@@ -255,189 +249,19 @@ export class Game extends Phaser.Scene {
     });
   }
 
-  createbugs() {
-    for (var i = 0; i < 5 + score / 2; i++) {
-      const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
-
-      bugs[i] = this.physics.add.image(pos.x, pos.y, "bug").setScale(0.2);
-      bugs[i].name = "bug" + i;
-
-      bugs[i].setVelocity(
-        Phaser.Math.Between(100, 300) + score,
-        Phaser.Math.Between(100, 300) + score
-      );
-      bugs[i].setBounce(1).setCollideWorldBounds(true);
-      bugs[i].health = 1;
-
-      if (Math.random() > 0.5) {
-        bugs[i].body.velocity.x *= -1;
-      } else {
-        bugs[i].body.velocity.y *= -1;
-      }
-
-      this.physics.add.collider(player, bugs[i], this.playerHitCallback);
-      // this.physics.add.overlap(mothership, bugs[i], this.damageBase);
-      this.physics.add.collider(bugs[i], bullethit, this.killbugs);
-    }
-  }
-  createenemy() {
-    const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
-
-    enemy = this.physics.add.image(pos.x, pos.y, "enemy");
-    enemy
-      .setOrigin(0.5, 0.5)
-      .setDisplaySize(132 + score, 120 + score)
-      .setCollideWorldBounds(true);
-
-    enemy.health = 3 + score / 4;
-    enemy.lastFired = 0;
-  }
-
-  createstars() {
-    const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
-
-    star = this.physics.add.image(pos.x, pos.y, "star1");
-    star.setOrigin(0.5, 0.5).setDisplaySize(50, 50).setCollideWorldBounds(true);
-
-    this.physics.add.overlap(player, star, this.buffs);
-  }
-
-  enemyHitCallback(enemyHit, bulletHit) {
-    // Reduce health of enemy
-    if (bulletHit.active === true && enemyHit.active === true) {
-      enemyHit.health = enemyHit.health - 1;
-
-      // Kill enemy if health <= 0
-      if (enemyHit.health <= 0) {
-        score = score + 3;
-        scoreText.setText("Score: " + score);
-        enemyHit.destroy();
-      }
-
-      // Destroy bullet
-      bulletHit.destroy();
-    }
-  }
-
-  killbugs(bug, bulletHit) {
-    // Reduce health of enemy
-
-    bug.health = bug.health - 1;
-
-    score++;
-    scoreText.setText("Score: " + score);
-    bug.destroy();
-
-    // Destroy bullet
-    bulletHit.destroy();
-  }
-
-  buffs(player, star) {
-    // Reduce health of enemy
-
-    player.health = player.health + 3;
-    //mothership.health = mothership.health + 5;
-
-    //mothershiphealth.setText("Base health: " + mothership.health);
-    playerhealth.setText(player.health);
-    star.destroy();
-  }
-
-  damageBase(playerHit, bulletHit) {
-    // Reduce health of player
-    if (bulletHit.active === true && playerHit.active === true) {
-      playerHit.health = playerHit.health - 1;
-      score--;
-      scoreText.setText("Score: " + score);
-      // mothershiphealth.setText("Base health: " + mothership.health);
-
-      bulletHit.destroy();
-    }
-  }
-
-  playerHitCallback(playerHit, bulletHit) {
-    // Reduce health of player
-    if (bulletHit.active === true && playerHit.active === true) {
-      playerHit.health = playerHit.health - 1;
-
-      // Kill hp sprites and kill player if health <= 0
-      if (playerHit.health == 8) {
-        hp5.destroy();
-      } else if (playerHit.health == 6) {
-        hp4.destroy();
-      } else if (playerHit.health == 4) {
-        hp3.destroy();
-      } else if (playerHit.health == 2) {
-        hp2.destroy();
-      } else if (playerHit.health == 0) {
-        hp1.destroy();
-      }
-
-      playerhealth.setText(player.health);
-      // Destroy bullet
-      //bulletHit.setActive(false).setVisible(false);
-      bulletHit.body.gameObject.setTint(0xff0000);
-      //this.time.addEvent({ delay: 300, callback: bulletHit, callbackScope: destroy() });
-      bulletHit.destroy();
-    }
-  }
-
-  enemyFire(enemy, player, time, gameObject) {
-    if (enemy.active === false) {
-      return;
-    }
-
-    if (time - enemy.lastFired > 1000) {
-      enemy.lastFired = time;
-
-      // Get bullet from bullets group
-      var bullet = enemyBullets.get().setActive(true).setVisible(true);
-
-      if (bullet) {
-        bullet.fire(enemy, player);
-        // Add collider between bullet and player
-        gameObject.physics.add.collider(player, bullet, this.playerHitCallback);
-      }
-    }
-  }
-
-  // Ensures sprite speed doesnt exceed maxVelocity while update is called
-  constrainVelocity(sprite, maxVelocity) {
-    if (!sprite || !sprite.body) return;
-
-    var angle, currVelocitySqr, vx, vy;
-    vx = sprite.body.velocity.x;
-    vy = sprite.body.velocity.y;
-    currVelocitySqr = vx * vx + vy * vy;
-
-    if (currVelocitySqr > maxVelocity * maxVelocity) {
-      angle = Math.atan2(vy, vx);
-      vx = Math.cos(angle) * maxVelocity;
-      vy = Math.sin(angle) * maxVelocity;
-      sprite.body.velocity.x = vx;
-      sprite.body.velocity.y = vy;
-    }
-  }
-
-  // Ensures reticle does not move offscreen
-  constrainReticle(reticle) {
-    var distX = reticle.x - player.x; // X distance between player & reticle
-    var distY = reticle.y - player.y; // Y distance between player & reticle
-
-    // Ensures reticle cannot be moved offscreen (player follow)
-    if (distX > 800) reticle.x = player.x + 800;
-    else if (distX < -800) reticle.x = player.x - 800;
-
-    if (distY > 600) reticle.y = player.y + 600;
-    else if (distY < -600) reticle.y = player.y - 600;
-  }
-
   update(time, delta) {
     if (moveKeys["left"].isDown) player.x -= 10;
     if (moveKeys["right"].isDown) player.x += 10;
 
     if (moveKeys["up"].isDown) player.y -= 10;
     if (moveKeys["down"].isDown) player.y += 10;
+
+    console.log(currentEnemies + " Inimigos Atuais");
+    //create new Wave
+    if (currentEnemies === 0) {
+      currentWave++;
+      this.createWave();
+    }
 
     // Rotates player to face towards reticle
     player.rotation = Phaser.Math.Angle.Between(
@@ -469,10 +293,238 @@ export class Game extends Phaser.Scene {
     // Make enemy fire
     this.enemyFire(enemy, player, time, this);
 
-    if (player.health <= 0)
-      // || mothership.health <= 0
+    if (player.health <= 0) {
       this.scene.start("Highscore", score);
+      this.sound.stopAll();
+    }
 
     this.controls.update(delta);
+  }
+
+  //----------------------------------------------------------------------------------------------
+  //------------------------------ Create Objects  -----------------------------------------------
+  //----------------------------------------------------------------------------------------------
+  createbugs() {
+    bugLife = bugLife * 1.2;
+
+    for (var i = 0; i < 5 + score / 2; i++) {
+      const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+      currentEnemies++;
+
+      bugs[i] = this.physics.add.image(pos.x, pos.y, "bug").setScale(0.2);
+      bugs[i].name = "bug" + i;
+
+      bugs[i].setVelocity(
+        Phaser.Math.Between(100, 300) + score,
+        Phaser.Math.Between(100, 300) + score
+      );
+
+      //add colisions
+      bugs[i].setBounce(1).setCollideWorldBounds(true);
+
+      //bug a cada wave fica com mais vida + 0.2 do que o turno passado
+      bugs[i].health = bugLife;
+
+      if (Math.random() > 0.5) {
+        bugs[i].body.velocity.x *= -1;
+      } else {
+        bugs[i].body.velocity.y *= -1;
+      }
+
+      this.physics.add.collider(player, bugs[i], this.playerHitCallback);
+      this.physics.add.collider(bugs[i], bullethit, this.killbugs);
+    }
+  }
+
+  createenemy() {
+    const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+
+    currentEnemies++;
+
+    enemy = this.physics.add.image(pos.x, pos.y, "enemy");
+    enemy
+      .setOrigin(0.5, 0.5)
+      .setDisplaySize(132 + score, 120 + score)
+      .setCollideWorldBounds(true);
+
+    enemy.health = 3 + score / 4;
+    enemy.lastFired = 0;
+  }
+
+  createstars() {
+    const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+
+    star = this.physics.add.image(pos.x, pos.y, "star1");
+    star.setOrigin(0.5, 0.5).setDisplaySize(50, 50).setCollideWorldBounds(true);
+
+    this.physics.add.overlap(player, star, this.buffPower);
+  }
+
+  createLife() {
+    //random position
+    const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+
+    life = this.physics.add.image(pos.x, pos.y, "heart");
+    life.setOrigin(0.5, 0.5).setDisplaySize(50, 50).setCollideWorldBounds(true);
+
+    this.physics.add.overlap(player, life, this.buffLife);
+  }
+
+  //generates a New Wave
+  createWave() {
+    var WaveText = this.add
+      .bitmapText(width / 1.5, 1, "arcade", "Starting Wave " + currentWave, 70)
+      .setTint(0xff0000)
+      .setScrollFactor(0, 0)
+      .setOrigin(0.6, 0.2);
+
+    this.createbugs();
+    this.createenemy();
+
+    setTimeout(() => {
+      WaveText.setVisible(false);
+    }, 6000);
+  }
+
+  //---------------------------------------------------------------------------------------------
+  //-------------------------Bullet Actions and Buffs--------------------------------------------
+  //---------------------------------------------------------------------------------------------
+
+  enemyHitCallback(enemyHit, bulletHit) {
+    // Reduce health of enemy
+    if (bulletHit.active === true && enemyHit.active === true) {
+      enemyHit.health = enemyHit.health - bulletPower;
+
+      // Kill enemy if health <= 0
+      if (enemyHit.health <= 0) {
+        score = score + 3;
+        scoreText.setText("Score: " + score);
+        currentEnemies--;
+        enemyHit.destroy();
+      }
+
+      // Destroy bullet
+      bulletHit.destroy();
+    }
+  }
+
+  killbugs(bug, bulletHit) {
+    // Reduce health of enemy
+    bug.health = bug.health - bulletPower;
+
+    if (bug.health <= 0) {
+      score++;
+      scoreText.setText("Score: " + score);
+      currentEnemies--;
+      bug.destroy();
+    }
+
+    // Destroy bullet
+    bulletHit.destroy();
+  }
+
+  buffPower(player, star) {
+    bulletPower++;
+    // playerhealth.setText(player.health);
+    soundLevelUp.play({ volume: 1.5 });
+    bulletPowerText.setText("Bullet Power: " + bulletPower);
+    star.destroy();
+  }
+  buffLife(player, life) {
+    player.health = player.health + 2;
+    playerhealth.setText(player.health);
+    soundLevelUp.play({ volume: 1.5 });
+    life.destroy();
+  }
+
+  playerHitCallback(playerHit, bulletHit) {
+    shotTaken.play();
+    //caso aconteça colisão entre bug e nave decrementar do numero total de inimigos
+    if (bulletHit.texture.key === "bug") {
+      console.log("Colidi com um bug");
+      currentEnemies--;
+    }
+    // Reduce health of player
+    if (bulletHit.active === true && playerHit.active === true) {
+      playerHit.health = playerHit.health - 1;
+
+      // Kill hp sprites and kill player if health <= 0
+      if (playerHit.health == 8) {
+        hp5.destroy();
+      } else if (playerHit.health == 6) {
+        hp4.destroy();
+      } else if (playerHit.health == 4) {
+        hp3.destroy();
+      } else if (playerHit.health == 2) {
+        hp2.destroy();
+      } else if (playerHit.health == 0) {
+        hp1.destroy();
+      }
+
+      playerhealth.setText(player.health);
+      // Destroy bullet
+      bulletHit.body.gameObject.setTint(0xff0000);
+      bulletHit.destroy();
+    }
+  }
+
+  enemyFire(enemy, player, time, gameObject) {
+    if (enemy.active === false) {
+      return;
+    }
+
+    if (time - enemy.lastFired > 1000) {
+      enemy.lastFired = time;
+
+      // Get bullet from bullets group
+      var bullet = enemyBullets.get().setActive(true).setVisible(true);
+
+      if (bullet) {
+        bullet.fire(enemy, player);
+        // Add collider between bullet and player
+        gameObject.physics.add.collider(player, bullet, this.playerHitCallback);
+      }
+    }
+  }
+
+  //get random value timer
+  randomIntFromInterval(min, max) {
+    // min and max included
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+
+  //-------------------------------------------------------------------------------------
+  //-------------------------Constraint Physics -----------------------------------------
+  //-------------------------------------------------------------------------------------
+
+  // Ensures sprite speed doesnt exceed maxVelocity while update is called
+  constrainVelocity(sprite, maxVelocity) {
+    if (!sprite || !sprite.body) return;
+
+    var angle, currVelocitySqr, vx, vy;
+    vx = sprite.body.velocity.x;
+    vy = sprite.body.velocity.y;
+    currVelocitySqr = vx * vx + vy * vy;
+
+    if (currVelocitySqr > maxVelocity * maxVelocity) {
+      angle = Math.atan2(vy, vx);
+      vx = Math.cos(angle) * maxVelocity;
+      vy = Math.sin(angle) * maxVelocity;
+      sprite.body.velocity.x = vx;
+      sprite.body.velocity.y = vy;
+    }
+  }
+
+  // Ensures reticle does not move offscreen
+  constrainReticle(reticle) {
+    var distX = reticle.x - player.x; // X distance between player & reticle
+    var distY = reticle.y - player.y; // Y distance between player & reticle
+
+    // Ensures reticle cannot be moved offscreen (player follow)
+    if (distX > 800) reticle.x = player.x + 800;
+    else if (distX < -800) reticle.x = player.x - 800;
+
+    if (distY > 600) reticle.y = player.y + 600;
+    else if (distY < -600) reticle.y = player.y - 600;
   }
 }
