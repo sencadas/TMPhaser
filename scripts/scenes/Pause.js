@@ -1,3 +1,5 @@
+let height = window.innerHeight;
+let width = window.innerWidth;
 export class Pause extends Phaser.Scene {
   constructor() {
     super({ key: "pause" });
@@ -5,7 +7,7 @@ export class Pause extends Phaser.Scene {
 
   create() {
     var title = this.add
-      .bitmapText(20, 200, "arcade", "Pause")
+      .bitmapText(width / 1.9, 100, "arcade", "Pause")
       .setTint(0xff00ff);
 
     this.tweens.add({

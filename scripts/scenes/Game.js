@@ -168,16 +168,6 @@ export class Game extends Phaser.Scene {
     // Pointer lock will only work after mousedown
     this.game.input.mouse.requestPointerLock();
 
-    // Exit pointer lock when Q or escape (by default) is pressed.
-    /* this.input.keyboard.on(
-      "keydown_Q",
-      function (event) {
-        if (game.input.mouse.locked) game.input.mouse.releasePointerLock();
-      },
-      0,
-      this
-    ); */
-
     // Move reticle upon locked pointer move
     this.input.on(
       "pointermove",
@@ -239,14 +229,25 @@ export class Game extends Phaser.Scene {
       },
       this
     );
+    console.log(this.game);
 
-    this.events.on("pause", function () {
-      console.log("Scene A paused");
-    });
+    this.events.on(
+      "pause",
+      function () {
+        console.log("Scene paused");
+        this.input.mouse.releasePointerLock();
+      },
+      this
+    );
 
-    this.events.on("resume", function () {
-      console.log("Scene A resumed");
-    });
+    this.events.on(
+      "resume",
+      function () {
+        console.log("Scene resumed");
+        this.game.input.mouse.requestPointerLock();
+      },
+      this
+    );
   }
 
   update(time, delta) {
@@ -288,7 +289,7 @@ export class Game extends Phaser.Scene {
     this.constrainVelocity(player, 500);
 
     // Constrain position of constrainReticle
-    this.constrainReticle(reticle);
+    //this.constrainReticle(reticle);
 
     // Make enemy fire
     this.enemyFire(enemy, player, time, this);
