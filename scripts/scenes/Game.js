@@ -2,7 +2,6 @@ import { Bullet } from "../classes/Bullet.js";
 import { Bulletenemy } from "../classes/Bulletenemy.js";
 
 var score = 0;
-var gold = 0;
 var spriteBounds;
 var bugs = new Array();
 var scoreText;
@@ -11,7 +10,7 @@ var wavebugs;
 var waveenemy;
 var wavestars;
 var bullethit;
-var mothership;
+//var mothership;
 var player = null;
 var enemy = null;
 var star = null;
@@ -21,7 +20,7 @@ var moveKeys = null;
 var playerBullets = null;
 var enemyBullets = null;
 var playerText;
-var mothershiphealth;
+//var mothershiphealth;
 var playerhealth;
 var hp1;
 var hp2;
@@ -54,7 +53,6 @@ export class Game extends Phaser.Scene {
     });
 
     score = 0;
-    gold = 1000;
 
     spriteBounds = Phaser.Geom.Rectangle.Inflate(
       Phaser.Geom.Rectangle.Clone(this.physics.world.bounds),
@@ -70,7 +68,7 @@ export class Game extends Phaser.Scene {
 
     player = this.physics.add.image(400, -400, "ship");
     reticle = this.physics.add.image(400, -400, "target");
-    mothership = this.physics.add.image(800, 700, "base");
+    //mothership = this.physics.add.image(800, 700, "base");
     enemy = this;
     hp1 = this.add.image(-350, -250, "target").setScrollFactor(0, 0);
     hp2 = this.add.image(-300, -250, "target").setScrollFactor(0, 0);
@@ -81,10 +79,10 @@ export class Game extends Phaser.Scene {
     // Set image/sprite properties
     background2.setOrigin(0.5, 0.5).setDisplaySize(3600, 3200);
     background.setOrigin(0.5, 0.5).setDisplaySize(2600, 2200);
-    mothership
+    /* mothership
       .setOrigin(0.5, 0.5)
       .setDisplaySize(600, 400)
-      .setCollideWorldBounds(true);
+      .setCollideWorldBounds(true); */
     wavestars = this.time.addEvent({
       delay: 40000,
       callback: this.createstars,
@@ -128,16 +126,16 @@ export class Game extends Phaser.Scene {
       repeat: -1,
     });
 
-    this.tweens.add({
+    /* this.tweens.add({
       targets: mothership,
       y: this.game.config.height / 2 + 200,
       duration: 5000,
       yoyo: true,
       repeat: -1,
-    });
+    }); */
 
     player.health = 10;
-    mothership.health = 40;
+    // mothership.health = 40;
 
     // Set camera properties
     this.cameras.main.zoom = 0.5;
@@ -227,11 +225,11 @@ export class Game extends Phaser.Scene {
       .setTint(0xff0000)
       .setScrollFactor(0, 0)
       .setOrigin(0.6, 0.2);
-    mothershiphealth = this.add
+    /* mothershiphealth = this.add
       .bitmapText(500, -270, "arcade", "Base health: 50")
       .setTint(0xff0000)
       .setScrollFactor(0, 0)
-      .setOrigin(0.6, 0.2);
+      .setOrigin(0.6, 0.2); */
     playerhealth = this.add
       .bitmapText(-50, -270, "arcade", "10")
       .setTint(0xff0000)
@@ -260,7 +258,7 @@ export class Game extends Phaser.Scene {
       }
 
       this.physics.add.collider(player, bugs[i], this.playerHitCallback);
-      this.physics.add.overlap(mothership, bugs[i], this.damageBase);
+      // this.physics.add.overlap(mothership, bugs[i], this.damageBase);
       this.physics.add.collider(bugs[i], bullethit, this.killbugs);
     }
   }
@@ -320,9 +318,9 @@ export class Game extends Phaser.Scene {
     // Reduce health of enemy
 
     player.health = player.health + 3;
-    mothership.health = mothership.health + 5;
+    //mothership.health = mothership.health + 5;
 
-    mothershiphealth.setText("Base health: " + mothership.health);
+    //mothershiphealth.setText("Base health: " + mothership.health);
     playerhealth.setText(player.health);
     star.destroy();
   }
@@ -333,7 +331,7 @@ export class Game extends Phaser.Scene {
       playerHit.health = playerHit.health - 1;
       score--;
       scoreText.setText("Score: " + score);
-      mothershiphealth.setText("Base health: " + mothership.health);
+      // mothershiphealth.setText("Base health: " + mothership.health);
 
       bulletHit.destroy();
     }
@@ -453,7 +451,8 @@ export class Game extends Phaser.Scene {
     // Make enemy fire
     this.enemyFire(enemy, player, time, this);
 
-    if (player.health <= 0 || mothership.health <= 0)
+    if (player.health <= 0)
+      // || mothership.health <= 0
       this.scene.start("Highscore", score);
 
     this.controls.update(delta);
