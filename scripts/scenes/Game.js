@@ -38,9 +38,13 @@ export class Game extends Phaser.Scene {
   }
 
   create() {
+    //Start Sound
+    this.sound.play("gameSound", {
+      loop: true,
+    });
+
     // Set world bounds
     this.physics.world.setBounds(-400, -400, 2500, 1900);
-    //this.physics.world.setBounds(0, 0, 1600, 1200);
 
     // Add 2 groups for Bullet objects
     playerBullets = this.physics.add.group({
@@ -68,8 +72,9 @@ export class Game extends Phaser.Scene {
 
     player = this.physics.add.image(400, -400, "ship");
     reticle = this.physics.add.image(400, -400, "target");
-    //mothership = this.physics.add.image(800, 700, "base");
     enemy = this;
+
+    //vidas do player
     hp1 = this.add.image(-350, -250, "target").setScrollFactor(0, 0);
     hp2 = this.add.image(-300, -250, "target").setScrollFactor(0, 0);
     hp3 = this.add.image(-250, -250, "target").setScrollFactor(0, 0);
@@ -79,28 +84,28 @@ export class Game extends Phaser.Scene {
     // Set image/sprite properties
     background2.setOrigin(0.5, 0.5).setDisplaySize(3600, 3200);
     background.setOrigin(0.5, 0.5).setDisplaySize(2600, 2200);
-    /* mothership
-      .setOrigin(0.5, 0.5)
-      .setDisplaySize(600, 400)
-      .setCollideWorldBounds(true); */
+
     wavestars = this.time.addEvent({
       delay: 40000,
       callback: this.createstars,
       callbackScope: this,
       loop: true,
     });
+
     waveenemy = this.time.addEvent({
       delay: 30000 + score * 4,
       callback: this.createenemy,
       callbackScope: this,
       loop: true,
     });
+
     wavebugs = this.time.addEvent({
       delay: 20000 + score * 4,
       callback: this.createbugs,
       callbackScope: this,
       loop: true,
     });
+
     player
       .setOrigin(0.5, 0.5)
       .setDisplaySize(132, 120)
@@ -111,6 +116,7 @@ export class Game extends Phaser.Scene {
       .setOrigin(0.5, 0.5)
       .setDisplaySize(25, 25)
       .setCollideWorldBounds(false);
+
     hp1.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
     hp2.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
     hp3.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
@@ -126,16 +132,8 @@ export class Game extends Phaser.Scene {
       repeat: -1,
     });
 
-    /* this.tweens.add({
-      targets: mothership,
-      y: this.game.config.height / 2 + 200,
-      duration: 5000,
-      yoyo: true,
-      repeat: -1,
-    }); */
-
+    //initializer vida do player
     player.health = 10;
-    // mothership.health = 40;
 
     // Set camera properties
     this.cameras.main.zoom = 0.5;
@@ -220,16 +218,15 @@ export class Game extends Phaser.Scene {
         "Who to play:\n\nDefende the base from the bugs\nQ-E to zoom in and out\nW-A-S-D to fly the ship \nMouse1 to shoot the enemies\nThe game ends when your ship or the base dies."
       )
       .setTint(0x00ff00);
+
+    //Score
     scoreText = this.add
       .bitmapText(-220, -200, "arcade", "Score: 0")
       .setTint(0xff0000)
       .setScrollFactor(0, 0)
       .setOrigin(0.6, 0.2);
-    /* mothershiphealth = this.add
-      .bitmapText(500, -270, "arcade", "Base health: 50")
-      .setTint(0xff0000)
-      .setScrollFactor(0, 0)
-      .setOrigin(0.6, 0.2); */
+
+    //vida do player
     playerhealth = this.add
       .bitmapText(-50, -270, "arcade", "10")
       .setTint(0xff0000)
@@ -318,9 +315,6 @@ export class Game extends Phaser.Scene {
     // Reduce health of enemy
 
     player.health = player.health + 3;
-    //mothership.health = mothership.health + 5;
-
-    //mothershiphealth.setText("Base health: " + mothership.health);
     playerhealth.setText(player.health);
     star.destroy();
   }
@@ -331,7 +325,6 @@ export class Game extends Phaser.Scene {
       playerHit.health = playerHit.health - 1;
       score--;
       scoreText.setText("Score: " + score);
-      // mothershiphealth.setText("Base health: " + mothership.health);
 
       bulletHit.destroy();
     }
@@ -357,9 +350,7 @@ export class Game extends Phaser.Scene {
 
       playerhealth.setText(player.health);
       // Destroy bullet
-      //bulletHit.setActive(false).setVisible(false);
       bulletHit.body.gameObject.setTint(0xff0000);
-      //this.time.addEvent({ delay: 300, callback: bulletHit, callbackScope: destroy() });
       bulletHit.destroy();
     }
   }
@@ -451,9 +442,10 @@ export class Game extends Phaser.Scene {
     // Make enemy fire
     this.enemyFire(enemy, player, time, this);
 
-    if (player.health <= 0)
-      // || mothership.health <= 0
+    if (player.health <= 0) {
       this.scene.start("Highscore", score);
+      this.sound.stopAll();
+    }
 
     this.controls.update(delta);
   }

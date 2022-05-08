@@ -22,16 +22,20 @@ export class Preloader extends Phaser.Scene {
     this.load.image("backgroundpedras", "assets/img/pedras.png");
     this.load.image("background", "assets/img/sky.jpg");
 
+    //Font
     this.load.bitmapFont(
       "arcade",
       "assets/input/arcade.png",
       "assets/input/arcade.xml"
     );
 
+    //audio
     this.load.audio("shot", "assets/audio/shot.mp3");
+    this.load.audio("gameSound", "assets/audio/gamesound.mp3");
   }
 
   create() {
+    //start another scene
     this.scene.start("mainmenu");
   }
 }
