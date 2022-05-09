@@ -28,18 +28,18 @@ var star = null;
 var life = null;
 var healthpoints = null;
 var reticle = null;
+var bulletBoss = 1;
+var bulletEnemie = 1;
 var moveKeys = null;
 var playerBullets = null;
 var enemyBullets = null;
 var bossBullets = null;
 var playerText;
 var playerhealth;
-var hp1;
-var hp2;
-var hp3;
-var hp4;
-var hp5;
 var soundLevelUp;
+var superPower = 3;
+var superPowerText;
+var totalCurrentBugs = 0;
 export class Game extends Phaser.Scene {
   constructor() {
     super({ key: "game" });
@@ -77,6 +77,16 @@ export class Game extends Phaser.Scene {
 
     score = 0;
 
+    this.input.keyboard.on(
+      "keydown-R",
+      function () {
+        if (superPower > 0) {
+          this.destroyAllBugs();
+        }
+      },
+      this
+    );
+
     spriteBounds = Phaser.Geom.Rectangle.Inflate(
       Phaser.Geom.Rectangle.Clone(this.physics.world.bounds),
       -100,
@@ -95,19 +105,12 @@ export class Game extends Phaser.Scene {
     boss = this;
     enemy = this;
 
-    //vidas do player
-    hp1 = this.add.image(-350, -250, "target").setScrollFactor(0, 0);
-    hp2 = this.add.image(-300, -250, "target").setScrollFactor(0, 0);
-    hp3 = this.add.image(-250, -250, "target").setScrollFactor(0, 0);
-    hp4 = this.add.image(-200, -250, "target").setScrollFactor(0, 0);
-    hp5 = this.add.image(-150, -250, "target").setScrollFactor(0, 0);
-
     // Set image/sprite properties
     background.setOrigin(0.5, 0.5).setDisplaySize(width * 8, height * 8);
 
     //generate Random Power
     this.time.addEvent({
-      delay: this.randomIntFromInterval(5000, 60000),
+      delay: this.randomIntFromInterval(30000, 90000),
       callback: this.createstars,
       callbackScope: this,
       loop: true,
@@ -132,14 +135,8 @@ export class Game extends Phaser.Scene {
       .setDisplaySize(40, 40)
       .setCollideWorldBounds(false);
 
-    hp1.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-    hp2.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-    hp3.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-    hp4.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-    hp5.setOrigin(0.5, 0.5).setDisplaySize(50, 50);
-
     //initializer vida do player
-    player.health = 10;
+    player.health = 15;
 
     // Set camera properties
     this.cameras.main.zoom = 0.5;
@@ -222,9 +219,16 @@ export class Game extends Phaser.Scene {
       .setScrollFactor(0, 0)
       .setOrigin(0.6, 0.2);
 
+    //Super Power Text
+    superPowerText = this.add
+      .bitmapText(-220, -90, "arcade", "Super Powers Remaining: 0")
+      .setTint(0xff0000)
+      .setScrollFactor(0, 0)
+      .setOrigin(0.6, 0.2);
+
     //vida do player
     playerhealth = this.add
-      .bitmapText(-50, -270, "arcade", "10")
+      .bitmapText(-220, -270, "arcade", "Life: 10")
       .setTint(0xff0000)
       .setScrollFactor(0, 0)
       .setOrigin(0.6, 0.2);
@@ -266,6 +270,7 @@ export class Game extends Phaser.Scene {
     if (moveKeys["up"].isDown) player.y -= 10;
     if (moveKeys["down"].isDown) player.y += 10;
 
+    console.log(totalCurrentBugs + " total Bugs");
     console.log(currentEnemies + " Inimigos Atuais");
     //create new Wave
     if (currentEnemies === 0) {
@@ -326,11 +331,12 @@ export class Game extends Phaser.Scene {
   //----------------------------------------------------------------------------------------------
   createbugs() {
     bugLife = bugLife * 1.2;
+    let bugsToCreate = currentWave * 4 + score * 0.05;
 
-    for (var i = 0; i < 5 + score / 2; i++) {
+    for (var i = 0; i < 350; i++) {
       const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
       currentEnemies++;
-
+      totalCurrentBugs++;
       bugs[i] = this.physics.add.image(pos.x, pos.y, "bug").setScale(0.2);
       bugs[i].name = "bug" + i;
 
@@ -358,6 +364,7 @@ export class Game extends Phaser.Scene {
 
   createenemy() {
     const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
+    bulletEnemie = bulletEnemie + 0.2;
 
     currentEnemies++;
 
@@ -374,7 +381,7 @@ export class Game extends Phaser.Scene {
   createBoss() {
     //random positiom
     const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
-
+    bulletBoss = bulletBoss * 1.7;
     currentEnemies++;
 
     boss = this.physics.add.image(pos.x, pos.y, "boss");
@@ -415,11 +422,13 @@ export class Game extends Phaser.Scene {
       .setOrigin(0.6, 0.2);
 
     if (currentWave % 10 === 0) {
+      superPower++;
       WaveText.setText("MEGA ROUND ! - " + currentWave);
       this.createenemy();
       this.createBoss();
       this.createbugs();
-    } else if (currentWave === 1) {
+    } else if (currentWave % 5 === 0) {
+      superPower++;
       WaveText.setText("BOSS ROUND! FIGHT!! - " + currentWave);
       this.createBoss();
       this.createenemy();
@@ -428,6 +437,8 @@ export class Game extends Phaser.Scene {
       this.createbugs();
       this.createenemy();
     }
+
+    superPowerText.setText("Super Powers Remaining: " + superPower);
 
     setTimeout(() => {
       WaveText.setVisible(false);
@@ -451,6 +462,9 @@ export class Game extends Phaser.Scene {
         enemyHit.destroy();
       }
 
+      if (bulletHit.texture.key === "bug") {
+        totalCurrentBugs--;
+      }
       // Destroy bullet
       bulletHit.destroy();
     }
@@ -464,6 +478,7 @@ export class Game extends Phaser.Scene {
       score++;
       scoreText.setText("Score: " + score);
       currentEnemies--;
+      totalCurrentBugs--;
       bug.destroy();
     }
 
@@ -473,43 +488,51 @@ export class Game extends Phaser.Scene {
 
   buffPower(player, star) {
     bulletPower++;
-    // playerhealth.setText(player.health);
     soundLevelUp.play({ volume: 1.5 });
     bulletPowerText.setText("Bullet Power: " + bulletPower);
     star.destroy();
   }
+
   buffLife(player, life) {
     player.health = player.health + 2;
-    playerhealth.setText(player.health);
+    playerhealth.setText("Life: " + player.health.toFixed(0));
     soundLevelUp.play({ volume: 1.5 });
     life.destroy();
   }
 
+  //power que destroi todos os bugs
+  destroyAllBugs() {
+    bugs.forEach((element) => {
+      element.destroy();
+    });
+    currentEnemies = currentEnemies - totalCurrentBugs;
+    totalCurrentBugs = 0;
+    var power = this.sound.add("powerSound");
+    power.play();
+    superPower--;
+    superPowerText.setText("Super Powers Remaining: " + superPower);
+  }
+
   playerHitCallback(playerHit, bulletHit) {
     shotTaken.play();
-    //caso aconteça colisão entre bug e nave decrementar do numero total de inimigos
-    if (bulletHit.texture.key === "bug") {
-      console.log("Colidi com um bug");
-      currentEnemies--;
-    }
-    // Reduce health of player
-    if (bulletHit.active === true && playerHit.active === true) {
-      playerHit.health = playerHit.health - 1;
 
-      // Kill hp sprites and kill player if health <= 0
-      if (playerHit.health == 8) {
-        hp5.destroy();
-      } else if (playerHit.health == 6) {
-        hp4.destroy();
-      } else if (playerHit.health == 4) {
-        hp3.destroy();
-      } else if (playerHit.health == 2) {
-        hp2.destroy();
-      } else if (playerHit.health == 0) {
-        hp1.destroy();
+    if (bulletHit.active === true && playerHit.active === true) {
+      // Reduce health of player
+      //caso aconteça colisão entre bug e nave decrementar do numero total de inimigos
+
+      if (bulletHit.texture.key === "bug") {
+        console.log("Colidi com um bug");
+        currentEnemies--;
+        totalCurrentBugs--;
+        playerHit.health = playerHit.health - 1;
+      }
+      if (bulletHit.texture.key === "boss") {
+        playerHit.health = playerHit.health - bulletBoss;
+      } else {
+        playerHit.health = playerHit.health - bulletEnemie;
       }
 
-      playerhealth.setText(player.health);
+      playerhealth.setText("Life: " + player.health.toFixed(0));
       // Destroy bullet
       bulletHit.body.gameObject.setTint(0xff0000);
       bulletHit.destroy();
