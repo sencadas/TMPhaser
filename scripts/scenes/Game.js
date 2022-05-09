@@ -5,41 +5,50 @@ import { BulletBoss } from "../classes/BossBullet.js";
 let height = window.innerHeight;
 let width = window.innerWidth;
 
+//game settings
+var spriteBounds;
+var reticle = null;
+var bullethit;
+var moveKeys = null;
+
 //wave Control
 var currentEnemies = 0;
 var currentWave = 0;
-var stars;
-var bugLife = 0.7;
 
-var bugs = new Array();
-var bulletPower = 1;
+//text display
+var superPowerText;
+var playerhealth;
 var bulletPowerText;
-
-var score = 0;
-var spriteBounds;
 var scoreText;
-var enemy = null;
-var boss = null;
-var counter = 0;
-var shotTaken;
-var bullethit;
-var player = null;
-var star = null;
+
+//geral state
+var score = 0;
 var life = null;
-var healthpoints = null;
-var reticle = null;
-var bulletBoss = 1;
-var bulletEnemie = 1;
-var moveKeys = null;
+var star = null;
+var bulletPower = 1;
+var superPower = 3;
+
+//bullets object
 var playerBullets = null;
 var enemyBullets = null;
 var bossBullets = null;
-var playerText;
-var playerhealth;
+
+//bullets damage
+
+//sound initializers
 var soundLevelUp;
-var superPower = 3;
-var superPowerText;
+var shotTaken;
+
+// current mobs and mob stats
+var player = null;
+var bugs = new Array();
+var enemy = null;
+var boss = null;
+var bugLife = 0.7;
 var totalCurrentBugs = 0;
+var bulletBoss = 1;
+var bulletEnemie = 1;
+
 export class Game extends Phaser.Scene {
   constructor() {
     super({ key: "game" });
