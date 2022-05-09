@@ -333,7 +333,7 @@ export class Game extends Phaser.Scene {
     bugLife = bugLife * 1.2;
     let bugsToCreate = currentWave * 4 + score * 0.05;
 
-    for (var i = 0; i < 350; i++) {
+    for (var i = 0; i < bugsToCreate; i++) {
       const pos = Phaser.Geom.Rectangle.Random(spriteBounds);
       currentEnemies++;
       totalCurrentBugs++;
